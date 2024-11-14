@@ -1,0 +1,8 @@
+ip addr add 192.168.2.4/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.2.2
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+apt-get install -y apache2
+service apache2 start
+echo "<html><h1>Bienvenue sur mon serveur web !</h1></html>" > /var/www/html/index.html
