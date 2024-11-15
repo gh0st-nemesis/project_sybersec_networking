@@ -3,3 +3,6 @@ ip link set eth0 up
 ip route add default via 192.168.2.2
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
+service mysql start
+
+bash /etc/fixtures/script_fixtures.sh
