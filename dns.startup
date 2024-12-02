@@ -4,3 +4,49 @@ ip route add default via 192.168.2.2
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 apt-get install -y bind9 bind9utils 
+
+cat <<EOF > /etc/bind/named.conf.local
+zone "atranet.local" {
+    type master;
+    file "/etc/bind/db.atranet.local";
+};
+EOF
+
+cat <<EOF > /etc/bind/named.conf.options
+options {
+    listen-on { 0.0.0.0; };  # Écouter sur toutes les interfaces
+    allow-query { any; };  # Accepter les requêtes depuis n'importe quel réseau
+    recursion yes;
+    forwarders {
+        8.8.8.8;  # Facultatif : Serveur DNS de Google comme forwarder
+    };
+};
+EOF
+
+cat <<EOF > /etc/bind/db.atranet.local
+\$TTL 604800
+@   IN  SOA atranet.local. root.atranet.local. (
+        2   ; Serial
+        604800 ; Refresh
+        86400 ; Retry
+        2419200 ; Expire
+        604800 ) ; Negative Cache TTL
+@   IN  NS  atranet.local.
+@   IN  A   192.168.2.6
+www IN  A   192.168.2.4
+EOF
+
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT
+iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+
+apt-get install -y iptables-persistent
+service iptables-persistent save
+
+service bind9 restart
+
+service bind9 restart
