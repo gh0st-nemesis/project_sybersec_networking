@@ -1,0 +1,39 @@
+ip addr add 192.168.2.18/24 dev eth0
+ip link set eth0 up
+ip route add default via 192.168.2.2
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+apt-get install -y apache2 openssl
+service apache2 start
+
+
+
+a2enmod ssl
+a2enmod rewrite
+
+mkdir -p /etc/ssl/localcerts
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/localcerts/atranet.local.key \
+    -out /etc/ssl/localcerts/atranet.local.crt \
+    -subj "/CN=www.atranet.local"
+
+cat <<EOF > /etc/apache2/sites-available/000-default.conf
+<VirtualHost *:80>
+    ServerName www.atranet.local
+    Redirect permanent / https://www.atranet.local/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName www.atranet.local
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/localcerts/atranet.local.crt
+    SSLCertificateKeyFile /etc/ssl/localcerts/atranet.local.key
+</VirtualHost>
+EOF
+
+echo "nameserver 192.168.2.6" > /etc/resolv.conf
+echo "<html><h1>Bienvenue sur www.atranet.local !</h1></html>" > /var/www/html/index.html
+
+service apache2 restart

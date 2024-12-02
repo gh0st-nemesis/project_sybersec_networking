@@ -24,7 +24,7 @@ cat <<EOF > /etc/bind/db.atranet.local
         604800 ) ; Negative Cache TTL
 @   IN  NS  atranet.local.
 @   IN  A   192.168.2.6
-www IN  A   192.168.2.4
+www IN  A   192.168.2.20
 EOF
 
 iptables -A INPUT -p udp --dport 53 -j ACCEPT
