@@ -12,16 +12,7 @@ zone "atranet.local" {
 };
 EOF
 
-cat <<EOF > /etc/bind/named.conf.options
-options {
-    listen-on { 0.0.0.0; };  # Écouter sur toutes les interfaces
-    allow-query { any; };  # Accepter les requêtes depuis n'importe quel réseau
-    recursion yes;
-    forwarders {
-        8.8.8.8;  # Facultatif : Serveur DNS de Google comme forwarder
-    };
-};
-EOF
+
 
 cat <<EOF > /etc/bind/db.atranet.local
 \$TTL 604800
@@ -47,6 +38,7 @@ iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
 apt-get install -y iptables-persistent
 service iptables-persistent save
 
+service apache2 restart
 service bind9 restart
 
 service bind9 restart
