@@ -3,35 +3,8 @@ ip link set eth0 up
 ip route add default via 192.168.2.2
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:vbernat/haproxy-2.6
-apt-get update
-apt-get install -y haproxy
+sysctl -w net.ipv4.ip_forward=1 || true
 
-
-cat <<EOF > /etc/haproxy/haproxy.cfg
-global
-    log /dev/log local0
-    maxconn 200
-
-defaults
-    log     global
-    option  httplog
-    timeout connect 5000ms
-    timeout client  50000ms
-    timeout server  50000ms
-
-frontend http_front
-    bind *:80
-    mode http
-    option httplog
-    default_backend web_servers
-
-backend web_servers
-    balance roundrobin
-    server web1 192.168.2.4:80 check
-    server web2 192.168.2.18:80 check
-EOF
-
-systemctl enable haproxy
-systemctl restart haproxy
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 192.168.2.4:443
+iptables -t nat -A PREROUTING -p tcp --dport 443 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 192.168.2.18:443
+iptables -t nat -A POSTROUTING -j MASQUERADE
